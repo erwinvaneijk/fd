@@ -259,14 +259,6 @@ impl TestEnv {
         self.assert_output_subdirectory(".", args, expected)
     }
 
-    /// Similar to assert_output, but able to handle non-utf8 output
-    #[cfg(all(unix, not(target_os = "macos")))]
-    pub fn assert_output_raw(&self, args: &[&str], expected: &[u8]) {
-        let output = self.assert_success_and_get_output(".", args);
-
-        assert_eq!(expected, &output.stdout[..]);
-    }
-
     /// Assert that calling *fd* in the specified path under the root working directory,
     /// and with the specified arguments produces the expected output.
     pub fn assert_output_subdirectory<P: AsRef<Path>>(

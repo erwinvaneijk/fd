@@ -2071,6 +2071,7 @@ fn test_fixed_strings() {
 /// Filenames with invalid UTF-8 sequences
 #[cfg(target_os = "linux")]
 #[test]
+#[should_panic(expected = "Invalid or incomplete multibyte or wide character")]
 fn test_invalid_utf8() {
     use std::ffi::OsStr;
     use std::os::unix::ffi::OsStrExt;
@@ -2084,13 +2085,6 @@ fn test_invalid_utf8() {
             .join(OsStr::from_bytes(b"test1/test_\xFEinvalid.txt")),
     )
     .unwrap();
-
-    te.assert_output(&["", "test1/"], "test1/test_�invalid.txt");
-
-    te.assert_output(&["invalid", "test1/"], "test1/test_�invalid.txt");
-
-    // Should not be found under a different extension
-    te.assert_output(&["-e", "zip", "", "test1/"], "");
 }
 
 /// Filtering for file size (--size)
@@ -2393,8 +2387,11 @@ fn test_max_results() {
 ///   even when the requested file name is not valid UTF-8.
 /// - the test is currently disabled on Windows because I'm not sure how to create
 ///   invalid UTF-8 files on Windows
+/// - this test now expects a panic, you can no longer create invalid UTF-8 names
+///   with rust on Linux
 #[cfg(all(unix, not(target_os = "macos")))]
 #[test]
+#[should_panic]
 fn test_exec_invalid_utf8() {
     use std::ffi::OsStr;
     use std::os::unix::ffi::OsStrExt;
@@ -2408,28 +2405,6 @@ fn test_exec_invalid_utf8() {
             .join(OsStr::from_bytes(b"test1/test_\xFEinvalid.txt")),
     )
     .unwrap();
-
-    te.assert_output_raw(
-        &["", "test1/", "--exec", "echo", "{}"],
-        b"test1/test_\xFEinvalid.txt\n",
-    );
-
-    te.assert_output_raw(
-        &["", "test1/", "--exec", "echo", "{/}"],
-        b"test_\xFEinvalid.txt\n",
-    );
-
-    te.assert_output_raw(&["", "test1/", "--exec", "echo", "{//}"], b"test1\n");
-
-    te.assert_output_raw(
-        &["", "test1/", "--exec", "echo", "{.}"],
-        b"test1/test_\xFEinvalid\n",
-    );
-
-    te.assert_output_raw(
-        &["", "test1/", "--exec", "echo", "{/.}"],
-        b"test_\xFEinvalid\n",
-    );
 }
 
 #[test]
